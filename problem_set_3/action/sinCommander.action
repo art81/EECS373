@@ -1,0 +1,10 @@
+#goal definition
+float64 freq
+float64 amplitude
+float64 numCycles
+---
+#result definition
+bool finished
+---
+#feedback
+

@@ -1,0 +1,6 @@
+<launch> 
+<node name= "minimal_controller" pkg= "problem_set_2" type= "minimal_controller" /> 
+<node name= "minimal_simulator" pkg= "problem_set_2" type= "minimal_simulator" /> 
+<node name= "sin_service" pkg= "problem_set_2" type= "sin_commander_service" /> 
+<node name= "sin_client" pkg= "problem_set_2" type= "sin_commander_client" /> 
+</launch> 
