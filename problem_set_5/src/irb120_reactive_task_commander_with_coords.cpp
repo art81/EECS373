@@ -145,11 +145,6 @@ int main(int argc, char** argv) {
         ros::Publisher pose_publisher = nh.advertise<geometry_msgs::PoseStamped>("triad_display_pose", 1, true);
         g_pose_publisher = &pose_publisher;
 
-
-
-
-
-
         //the following is an std::vector of affines.  It describes a path in Cartesian coords, including orientations
         //not needed yet; is constructed inside the generic planner by interpolation
         //std::vector<Eigen::Affine3d> affine_path;
@@ -197,13 +192,13 @@ int main(int argc, char** argv) {
         traj_publisher.publish(new_trajectory); //publish the trajectory;
         ros::Duration(1).sleep();
 
-        //Andrew Tarnoff for EECS 373
+        //Andrew Tarnoff for EECS 373 MEAT OF THE CODE I WROTE AFTER THIS LINE
 
-        double xDes, yDes;
         //Getting user input of where the gear should be moved to
-        cout << "Enter an X coord for the gear to be moved to: ";
+        double xDes, yDes;
+        cout << "Enter an X-coord for the gear to be moved to: ";
         cin>>xDes;
-        cout << "Enter a Y coord for the gear to be moved to: ";
+        cout << "Enter a Y-coord for the gear to be moved to: ";
         cin>>yDes;
 
         //Finds the gear object pose and then continues if it found and breaks if not.
@@ -238,8 +233,8 @@ int main(int argc, char** argv) {
                         initialVectorXd = optimal_path.back();
                         optimal_path.clear();
 
-                        //Set goal affine to where the gear is but 0.08m away so it can push
-                        goalAffine.linear() = R_down;
+                        //Set goal affine to where the gear is but 0.08m away so it can push. Either side of the gear depending which way it needs to be pushed
+                        goalAffine.linear() = R_down; //Facing downwards
                         if (xError > 0) {
                                 flange_origin << g_perceived_object_pose.pose.position.x - 0.08, g_perceived_object_pose.pose.position.y, pushZ;
                         } else {
@@ -257,7 +252,7 @@ int main(int argc, char** argv) {
                         optimal_path.clear();
 
                         //Set goal affine to where the gear is desired to be but minus flangeRadius to account for size of gear
-                        goalAffine.linear() = R_down;
+                        goalAffine.linear() = R_down; //Facing downwards
                         //Decides whether or not to end less than or greater then the actual desired position
                         //Based on which side the flange is on the gear
                         if(xError > 0) {
@@ -278,7 +273,7 @@ int main(int argc, char** argv) {
                         optimal_path.clear();
 
                         //Set goal affine to where the flange was but up to z = 0.2
-                        goalAffine.linear() = R_down;
+                        goalAffine.linear() = R_down; //Facing downwards
                         if(xError > 0) {
                                 flange_origin << xDes - (flangeRadius - xMove), g_perceived_object_pose.pose.position.y, upZ;
                         } else {
@@ -310,7 +305,7 @@ int main(int argc, char** argv) {
                         optimal_path.clear();
 
                         //Set goal affine to where the gear is but 0.08m away so it can push
-                        goalAffine.linear() = R_down;
+                        goalAffine.linear() = R_down; //Facing downwards
                         if (yError > 0) {
                                 flange_origin << g_perceived_object_pose.pose.position.x, g_perceived_object_pose.pose.position.y - 0.08, pushZ;
                         } else {
@@ -328,7 +323,7 @@ int main(int argc, char** argv) {
                         optimal_path.clear();
 
                         //Set goal affine to where the gear is desired to be but minus flangeRadius to account for size of gear
-                        goalAffine.linear() = R_down;
+                        goalAffine.linear() = R_down; //Facing downwards
                         //Decides whether or not to end less than or greater then the actual desired position
                         //Based on which side the flange is on the gear
                         if(yError > 0) {
@@ -349,7 +344,7 @@ int main(int argc, char** argv) {
                         optimal_path.clear();
 
                         //Set goal affine to where the flange was but up to z = 0.2
-                        goalAffine.linear() = R_down;
+                        goalAffine.linear() = R_down; //Facing downwards
                         if(yError > 0) {
                                 flange_origin << g_perceived_object_pose.pose.position.x, yDes - (flangeRadius - yMove), upZ;
                         } else {
@@ -373,7 +368,7 @@ int main(int argc, char** argv) {
                 xError = xDes - g_perceived_object_pose.pose.position.x;
         }
 
-        //Commands the arm to go back to home.
+        //Commands the arm to go back to home after the full motion
         g_q_vec_arm_Xd << 0, 0, 0, 0, 0, 0;
         optimal_path.clear(); //Clear optimal path.
         optimal_path.push_back(g_q_vec_arm_Xd); //start from current pose
