@@ -223,10 +223,10 @@ int main(int argc, char** argv) {
         double pushZ = 0.005; //Z Coord of the flange when pushing the gear
         double upZ = 0.15; //Z coord of the flange to rise to after pushing the gear
 
-        while (abs(xError) >= 0.001 || abs(yError) >= 0.001) {
+        while (abs(xError) >= 0.002 || abs(yError) >= 0.002) {
 
                 double xMove = 0.0; //Variable to be incremented every loop so that the gear gets closer and closer to desired position
-                while (abs(xError) >= 0.001) {
+                while (abs(xError) >= 0.002) {
                         //XXXXXXXXX MOVES FLANGE NEXT TO GEAR TO BE PUSHED
                         //Initial position is where the last optimal path commanded. Now clear optimal path
                         //To be filled with new path
@@ -288,7 +288,7 @@ int main(int argc, char** argv) {
                         findGearObjectPose(object_finder_ac);
                         xError = xDes - g_perceived_object_pose.pose.position.x;
                         yError = yDes - g_perceived_object_pose.pose.position.y;
-                        xMove += 0.001;
+                        xMove += 0.002;
                 }
 
 
@@ -297,7 +297,7 @@ int main(int argc, char** argv) {
                 //First pushes the gear where it should be and then moves the arm straight up and then
                 //checks the error and continues if it needs to.
                 double yMove = 0.0; //Variable to be incremented every loop so that the gear gets closer and closer to desired position
-                while (abs(yError) >= 0.001) {
+                while (abs(yError) >= 0.002) {
                         //XXXXXXXXX MOVES FLANGE NEXT TO GEAR TO BE PUSHED
                         //Initial position is where the last optimal path commanded. Now clear optimal path
                         //To be filled with new path
@@ -359,7 +359,7 @@ int main(int argc, char** argv) {
                         findGearObjectPose(object_finder_ac);
                         yError = yDes - g_perceived_object_pose.pose.position.y;
                         xError = xDes - g_perceived_object_pose.pose.position.x;
-                        yMove += 0.001;
+                        yMove += 0.002;
                 }
 
                 //Calculates new gear errors
