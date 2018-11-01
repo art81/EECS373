@@ -363,7 +363,6 @@ int main(int argc, char** argv) {
                 }
 
                 //Calculates new gear errors
-                findGearObjectPose(object_finder_ac);
                 yError = yDes - g_perceived_object_pose.pose.position.y;
                 xError = xDes - g_perceived_object_pose.pose.position.x;
         }
