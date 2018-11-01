@@ -74,7 +74,6 @@ int main(int argc, char **argv) {
                 //Keep the Conveyor Moving until there is a model detected
                 g_takeSnapshot = true;
                 ros::spinOnce();
-
         }
         ROS_INFO("Detected a Box underneath LogicalCamera2");
 
@@ -91,12 +90,11 @@ int main(int argc, char **argv) {
         ROS_INFO("Stopped the Box underneath LogicalCamera2 and DELAYING for 5 seconds");
 
         //Delay for 5 seconds
-        ros::Duration(1.0).sleep();
+        ros::Duration(1.2).sleep();
 
         //Turn the conveyer back on so that the box moves to the pickup zone
         setConveyorPower(100.0, conveyor_client);
         ROS_INFO("Turned the Conveyor back on to move box to pickup zone");
-
 
         //Calling the Drone
         drone_srv.request.shipment_type = "dummy";
