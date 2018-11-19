@@ -70,11 +70,6 @@ int main(int argc, char** argv) {
         //Defining subscriber to get pose of the block.
         ros::Subscriber block_pose_sub = nh.subscribe("block_pose", 1, blockPoseCb);
 
-        while (!gotNewBlockPose_) {
-                ros::spinOnce();
-        }
-        gotNewBlockPose_ = false;
-
         Eigen::VectorXd joint_angles;
         Eigen::Vector3d dp_displacement;
         int rtn_val;
@@ -125,6 +120,11 @@ int main(int argc, char** argv) {
         T_gb.row(2) <<  0,  0, -1, 0.0343;
         T_gb.row(3) <<  0,  0,  0, 1;
 
+        while (!gotNewBlockPose_) {
+                ros::spinOnce();
+        }
+        gotNewBlockPose_ = false;
+
         //Transform of block in reference to robot (from find_block.cpp)
         Eigen::MatrixXd R_br = quaternionToMatrix(block_pose_.pose.orientation);
         Eigen::MatrixXd T_br(4,4);
@@ -140,6 +140,15 @@ int main(int argc, char** argv) {
         tool_affine.linear().row(1) <<  T_gr(1,0),  T_gr(1,1),  T_gr(1,2);
         tool_affine.linear().row(2) <<  T_gr(2,0),  T_gr(2,1),  T_gr(2,2);
         tool_affine.translation() << T_gr(0,3), T_gr(1,3), T_gr(2,3); //x,y,z in transformation matrix
+
+        ROS_INFO("enabling vacuum gripper");
+        //enable the vacuum gripper:
+        srv.request.data = true;
+        while (!client.call(srv) && ros::ok()) {
+                ROS_INFO("Sending command to gripper...");
+                ros::spinOnce();
+                ros::Duration(0.5).sleep();
+        }
 
         //move to approach pose:
         ROS_INFO("moving to approach pose");
@@ -157,15 +166,6 @@ int main(int argc, char** argv) {
                 ros::Duration(arrival_time + 0.2).sleep();
         } else {
                 ROS_WARN("unsuccessful plan; rtn_code = %d", rtn_val);
-        }
-
-        ROS_INFO("enabling vacuum gripper");
-        //enable the vacuum gripper:
-        srv.request.data = true;
-        while (!client.call(srv) && ros::ok()) {
-                ROS_INFO("Sending command to gripper...");
-                ros::spinOnce();
-                ros::Duration(0.5).sleep();
         }
 
         ROS_INFO("requesting plan to depart with grasped object:");

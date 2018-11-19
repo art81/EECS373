@@ -180,7 +180,8 @@ void ImageConverter::imageCb(const sensor_msgs::ImageConstPtr& msg){
 
         //Object in reference to camera using yaw rotation matrix with angle obtained from vision LATER
         double angleOc = atan(getSlope(xVals,yVals));
-        //ROS_INFO("ANGLE: %f", angleOc);
+        //ROS_INFO("ANGLE (DEG): %f", angleOc*180/3.14515);
+
         T_oc.row(0) << cos(angleOc), -sin(angleOc), 0, x_camera;
         T_oc.row(1) << sin(angleOc),  cos(angleOc), 0, y_camera;
         T_oc.row(2) << 0,             0,            1, -1.75;
@@ -219,7 +220,7 @@ void ImageConverter::imageCb(const sensor_msgs::ImageConstPtr& msg){
         double x_robot = T_or(0,3);
         double y_robot = T_or(1,3);
 
-        ROS_INFO("X-ROBOT: %f; Y-ROBOT: %f",x_robot,y_robot);
+        //ROS_INFO("X-ROBOT: %f; Y-ROBOT: %f",x_robot,y_robot);
 
         //*****************************************************
 
@@ -234,6 +235,7 @@ void ImageConverter::imageCb(const sensor_msgs::ImageConstPtr& msg){
         block_pose_.pose.position.x = x_robot;
         block_pose_.pose.position.y = y_robot;
         double theta = -acos(T_or(0,0)); //Since its just a yaw rotation, element 0,0 is cos(theta)
+        ROS_INFO("ROBO ANGLE (DEG): %f", theta*180/3.14515);
 
         // need camera info to fill in x,y,and orientation x,y,z,w
         //geometry_msgs::Quaternion quat_est
