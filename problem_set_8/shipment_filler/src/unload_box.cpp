@@ -181,19 +181,11 @@ int main(int argc, char** argv) {
                 ROS_INFO_STREAM(current_part<<endl);
 
                 //Initializing necessary Variables
-                Eigen::MatrixXd badPartQCam(4,4); //Bad part in reference to Quality Camera
                 Eigen::MatrixXd badPartWorld(4,4); //Bad part in reference to world
-                Eigen::MatrixXd qCamToWorld(4,4); //Quality Camera in reference to worlds
 
                 //Convert the bad part pose to be in reference to the world and held in a 4x4
                 //qCamToWorld = poseToTransform(boxInspector.getQualityCamera1Image().pose);
-                badPartQCam = poseToTransform(current_part.pose.pose);
-                //badPartWorld = qCamToWorld * badPartQCam;
-                badPartWorld = badPartQCam; //XXX TURNS OUT THE CURRENT PART IS IN WORLD WOORDS XXX
-
-                ROS_INFO("X: %f", badPartWorld(0,3));
-                ROS_INFO("Y: %f", badPartWorld(1,3));
-                ROS_INFO("Z: %f", badPartWorld(2,3));
+                badPartWorld = poseToTransform(current_part.pose.pose);
 
                 //Find which model in orphan_models_wrt_world is closest to the pose of the bad part
                 osrf_gear::Model badModel = findClosestModel(badPartWorld, orphan_models_wrt_world);
