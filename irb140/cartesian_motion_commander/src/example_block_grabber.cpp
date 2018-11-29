@@ -33,7 +33,6 @@ void blockPoseCb(const geometry_msgs::PoseStamped& newBlockPose) {
         gotNewBlockPose_ = true;
 }
 
-
 Eigen::MatrixXd quaternionToMatrix(geometry_msgs::Quaternion quat) {
         Eigen::MatrixXd m(3,3);
         double x = quat.x;
