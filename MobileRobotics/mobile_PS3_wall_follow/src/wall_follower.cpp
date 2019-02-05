@@ -61,6 +61,8 @@ struct Averages
         double yAvg;
 };
 
+Averages g_AvgLeftUp;
+
 void odomCallback(const nav_msgs::Odometry& odom_msg) {
         g_odom = odom_msg;
         //here is a means to convert quaternion to a scalar heading angle
@@ -147,25 +149,24 @@ double determineXDiffOfWallOnLeft() {
         double wallAngle = 0.0;
 
         int pingLeftIdx = g_index_90deg_left;
-        int pingLeftUpIdx = g_index_90deg_left - (int)((M_PI/6)/g_angle_increment); //Index relating to pi/3 degrees ahead of direct left
+        int pingLeftUpIdx = g_index_90deg_left - (int)((M_PI/4)/g_angle_increment); //Index relating to pi/3 degrees ahead of direct left
 
         Averages AvgLeft;
-        Averages AvgLeftUp;
 
-        AvgLeft   = averagePings(10, pingLeftIdx);
-        AvgLeftUp = averagePings(10, pingLeftUpIdx);
+        AvgLeft     = averagePings(10, pingLeftIdx);
+        g_AvgLeftUp = averagePings(10, pingLeftUpIdx);
 
         double distLeft   = sqrt(pow(AvgLeft.xAvg,2) + pow(AvgLeft.yAvg,2)); //Distance from bot to left wall
-        double distLeftUp = sqrt(pow(AvgLeftUp.xAvg,2) + pow(AvgLeftUp.yAvg,2)); //Distance from bot to further up on left wall
+        double distLeftUp = sqrt(pow(g_AvgLeftUp.xAvg,2) + pow(g_AvgLeftUp.yAvg,2)); //Distance from bot to further up on left wall
 
         //If the distLeftUp is off of the wall then dont turn the robot at all
-        if (abs(distLeftUp - distLeft) > WALL_FOLLOW_RADIUS) {
-                ros::spinOnce(); //update g_[hi]
+        if (abs(distLeftUp - distLeft) > WALL_FOLLOW_RADIUS || abs(distLeftUp) > 3*WALL_FOLLOW_RADIUS) {
+                ros::spinOnce(); //update g_phi
                 ROS_INFO("INVALID");
                 return 0.0; //So that the robot doesn't turn at all since we got no real info about the wall
         } else {
                 ROS_INFO("VALID");
-                return AvgLeft.xAvg - AvgLeftUp.xAvg;
+                return AvgLeft.xAvg - g_AvgLeftUp.xAvg;
         }
 }
 
@@ -224,15 +225,16 @@ int main(int argc, char **argv) {
 
                 ros::spinOnce();
                 ROS_INFO("testing if mindist ping is other than left wall");
-                if ((g_radius_min < WALL_FOLLOW_RADIUS) && (g_index_min_dist_ping < g_index_tangent_left) && (abs(g_index_min_dist_ping - g_index_tangent_left) > 10)) {
+                int pingIndexTolerance = 20;
+                if ((g_radius_min < WALL_FOLLOW_RADIUS) && (g_index_min_dist_ping < g_index_tangent_left) && (abs(g_index_min_dist_ping - g_index_tangent_left) > pingIndexTolerance)) {
                         //if here, then there is a ping closer than left wall; rotate to make this min-dist ping on left.
-                        //Only happens if the min dist ping is more than 10 pings away from directly left.
+                        //Only happens if the min dist ping is more than pingIndexTolerance pings away from directly left.
                         twist_cmd.linear.x = 0; //halt
                         twist_commander.publish(twist_cmd);
                         ROS_WARN("barrier ahead; need to spin");
                         ROS_WARN("min ping dist = %f at index %d", g_radius_min, g_index_min_dist_ping);
 
-                        double dtheta = ((double) (g_index_min_dist_ping - g_index_90deg_left)) * g_angle_increment;
+                        double dtheta = ((double) (g_index_min_dist_ping - g_index_90deg_left - pingIndexTolerance)) * g_angle_increment;
                         ROS_INFO("rotate dtheta = %f", dtheta);
                         twist_cmd.angular.z = -YAW_RATE;
                         twist_commander.publish(twist_cmd);
@@ -251,6 +253,7 @@ int main(int argc, char **argv) {
                         ROS_WARN("stopping");
                         twist_commander.publish(twist_cmd);
                 }
+
                 //should have clearance on left, as well as slightly forward from there, on left
                 ROS_INFO("tangent test clearance = %f", g_clearance_tan_test);
                 twist_cmd.linear.x = SPEED;
@@ -264,7 +267,8 @@ int main(int argc, char **argv) {
                         ros::spinOnce();
                         loop_timer.sleep();
                 }
-                if ((g_radius_min < WALL_FOLLOW_RADIUS) && (g_index_min_dist_ping < g_index_tangent_left)) {
+
+                if ((g_radius_min < WALL_FOLLOW_RADIUS) && (g_index_min_dist_ping < (g_index_tangent_left - pingIndexTolerance))) {
                         ROS_WARN("blocked ahead");
                         ROS_WARN("min ping dist = %f at index %d", g_radius_min, g_index_min_dist_ping);
                 } else if (g_clearance_tan_test > WALL_FOLLOW_RADIUS) {
@@ -275,7 +279,7 @@ int main(int argc, char **argv) {
                         twist_cmd.linear.x = RADIUS_LEFT_TURN*YAW_RATE;
                         twist_commander.publish(twist_cmd);
 
-                        while (g_clearance_tan_test > WALL_FOLLOW_RADIUS) {
+                        while (g_radius_min > WALL_FOLLOW_RADIUS) {
                                 ROS_WARN("trying to reconnect to wall w/ circular trajectory");
                                 ros::spinOnce();
                                 loop_timer.sleep();
@@ -293,6 +297,7 @@ int main(int argc, char **argv) {
                         double angSpeed = 0.1;
                         int count = 0;
                         ROS_INFO("Turning to become parallel with the wall");
+                        bool linedUp = false;
                         while(abs(xDiff) >= 0.01) { //while xDiff on wall is greater than 0.05m spin.
                                 //Spin in place until you are within good error margins
 
@@ -319,7 +324,22 @@ int main(int argc, char **argv) {
                         //Commanding the robot to now move forward
                         twist_cmd.linear.x = SPEED; //command to move forward
                         twist_cmd.angular.z = 0.0;
-                        twist_commander.publish(twist_cmd);
+                        //twist_commander.publish(twist_cmd);
+
+                        //If you are "lined up" with the wall, move forward for a second
+                        if(xDiff != 0.0) {
+                                twist_commander.publish(twist_cmd);
+                                double frontDist = g_AvgLeftUp.yAvg - WALL_FOLLOW_RADIUS;
+
+                                //If infinite range then set to the max range of the lidar
+                                if(frontDist == std::numeric_limits<double>::infinity()) {
+                                    frontDist = g_laser_scan.range_max - WALL_FOLLOW_RADIUS;
+                                }
+
+                                double travelT = frontDist / SPEED;
+                                ros::Rate loop_timer2(1.0/travelT);
+                                loop_timer2.sleep();
+                        }
                 }
 
         } //loop forever
