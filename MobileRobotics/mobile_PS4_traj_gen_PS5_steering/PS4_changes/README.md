@@ -1,4 +1,4 @@
-# mobile_PS3_wallFollow
+# mobile_PS4_traj_gen
 
 ## Example usage
 
