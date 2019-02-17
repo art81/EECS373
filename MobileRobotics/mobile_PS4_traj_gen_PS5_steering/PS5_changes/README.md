@@ -2,4 +2,14 @@
 
 ## Example usage
 
+#For Open-Loop Control
 roslaunch mobot_urdf mobot_in_pen.launch
+rosrun mobot_pub_des_state2 mobot_pub_des_state2
+rosrun mobot_pub_des_state2 open_loop_controller2
+rosrun mobot_pub_des_state2 pub_des_state_path_client
+
+#For Linear Steering Control
+roslaunch mobot_urdf mobot_in_pen.launch
+rosrun mobot_pub_des_state2 mobot_pub_des_state2
+rosrun lin_steering lin_steering_wrt_odom
+rosrun mobot_pub_des_state2 pub_des_state_path_client
